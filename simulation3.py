@@ -1,8 +1,8 @@
 from LightPipes import *
 from utils import *
 import time
-from LightPipes.propagators import ASM
-
+# from LightPipes.propagators import ASM
+from propagators import ASM
 # using Fresnel propagation with ASM
 
 wavelength = 633*nm

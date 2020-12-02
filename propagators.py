@@ -26,7 +26,8 @@ if not _using_pyfftw:
 import numpy as _np
 
 def ASM(Fin, z):
-    Fout = Field.shallowcopy(Fin)
+    # Fout = Field.shallowcopy(Fin)
+    Fout = Fin
     wavelength = Fout.lam
     N = Fout.N
     size = Fout.siz
