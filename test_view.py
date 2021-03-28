@@ -3,13 +3,13 @@ import os
 from PIL import ImageDraw,Image
 
 # parent_path = '/Users/zhangyunping/PycharmProjects/Holo_synthetic/hologram'
-json_file = 'test.json'
+json_file = '/Users/zhangyunping/PycharmProjects/Holo_synthetic/annotations/annotations.json'
 with open(json_file) as annos:
     annotations = json.load(annos)
 annotations = annotations['annotations']
 # image_path = os.path.join(parent_path, 'Hologram' + str(0) + '.png')
 # image_path = '/Users/zhangyunping/PycharmProjects/Holo_synthetic/test0.png'
-image_path = '/Users/zhangyunping/PycharmProjects/Holo_synthetic/hologram/Hologram0.png'
+image_path = '/Users/zhangyunping/PycharmProjects/Holo_synthetic/hologram/0.jpg'
 image = Image.open(image_path)
 draw = ImageDraw.Draw(image)
 for i in range(len(annotations)):
