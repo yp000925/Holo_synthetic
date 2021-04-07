@@ -51,7 +51,7 @@ for i, cls in enumerate(classes, 0):
     dataset['categories'].append({'id': i, 'name': str(cls), 'supercategory':'Depth'})
 
 
-images = np.sort(os.listdir('hologram'))
+images = np.sort(os.listdir('data_holo/hologram'))
 
 for i, imagename in enumerate(images, 0):
     id = re.findall(r'\d+', imagename)
@@ -59,7 +59,7 @@ for i, imagename in enumerate(images, 0):
     if i == 10:
         break
 
-params = np.sort(os.listdir('param'))
+params = np.sort(os.listdir('data_holo/param'))
 for i,param in enumerate(params,0):
     (id,objs) = collect_anno(param)
     # id = re.findall(r'\d+', param)

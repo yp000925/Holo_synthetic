@@ -94,9 +94,6 @@ if __name__ == '__main__':
 
 
 
-
-
-
 particles = particle_field(NUMBER,xyrange=9*mm,z_list=Z_list,size_range=[50 * um, 50 * um])
 particles = particles.sort_values(by=['z'],ascending=False)
 particles.to_csv("exp1.csv",index=False)

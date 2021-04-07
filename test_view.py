@@ -9,7 +9,7 @@ with open(json_file) as annos:
 annotations = annotations['annotations']
 # image_path = os.path.join(parent_path, 'Hologram' + str(0) + '.png')
 # image_path = '/Users/zhangyunping/PycharmProjects/Holo_synthetic/test0.png'
-image_path = '/Users/zhangyunping/PycharmProjects/Holo_synthetic/hologram/0.jpg'
+image_path = '/data_holo/hologram/0.jpg'
 image = Image.open(image_path)
 draw = ImageDraw.Draw(image)
 for i in range(len(annotations)):

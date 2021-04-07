@@ -58,7 +58,7 @@ for i, cls in enumerate(classes, 0):
     dataset['categories'].append({'id': i, 'name': str(cls), 'supercategory':'Depth'})
 
 
-images = np.sort(os.listdir('hologram'))
+images = np.sort(os.listdir('data_holo/hologram'))
 images = images[0:10]
 for i, imagename in enumerate(images, 0):
     id = re.findall(r'\d+', imagename)
@@ -66,7 +66,7 @@ for i, imagename in enumerate(images, 0):
     # if i == 10:
     #     break
 
-params = np.sort(os.listdir('param'))
+params = np.sort(os.listdir('data_holo/param'))
 params = params[0:10]
 cnt_annot = 20000000
 for i,param in enumerate(params,0):

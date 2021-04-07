@@ -2,7 +2,7 @@ import json
 import os
 import cv2
 
-parent_path = '/Users/zhangyunping/PycharmProjects/Holo_synthetic/hologram'
+parent_path = '/data_holo/hologram'
 json_file = 'test.json'
 with open(json_file) as annos:
     annotations = json.load(annos)

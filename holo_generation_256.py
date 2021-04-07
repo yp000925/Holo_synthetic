@@ -30,23 +30,6 @@ def particle_field(number,xyrange,z_list,size_range):
     df['size'] = s
     return df
 
-# 缺少最后 z_list[-1] 的particles
-# def generate_holo_fromcsv2(file):
-#     particles_field = pd.read_csv(file)
-#     z_list = particles_field['z'].unique()
-#     F_obj = Begin(size, wavelength, N)
-#     for i in range(len(z_list)-1):
-#         prop_dis = z_list[i]-z_list[i+1]
-#         if prop_dis<0:
-#             raise ValueError("z is not aceding")
-#         particles = particles_field[particles_field['z']==z_list[i]]
-#         for j in range(len(particles)):
-#             F_obj = CircScreen(F_obj, particles.iloc[j]['size'], particles.iloc[j]['x'], particles.iloc[j]['y'])
-#         F_obj = ASM(F_obj, prop_dis)
-#     F_obj = ASM(F_obj, z_list[-1])
-#     I = Intensity(F_obj)
-#     # plt.imsave("Hologram%d.png" % n, I, cmap='gray')
-#     return I
 
 def generate_holo_fromcsv2(file):
     particles_field = pd.read_csv(file)
@@ -74,28 +57,28 @@ if __name__ == '__main__':
     wavelength = 633*nm
     N = 256
     pixel_pitch = 10*um
-    # size = pixel_pitch*N
-    size = 10*mm # 10mm * 10mm
-    size_range = [20*um,100*um]
-    holo = generate_holo_fromcsv2("param/%d.csv" % 10)
-    plt.imsave("256%d.jpg" % 10, holo, cmap='gray')
-    #
-    #
-    # for n in range(800,2000):
-    #     t1 = time.time()
-    #     # generate the random 3D location
-    #     NUMBER = np.random.randint(low=20, high=50, dtype=int)
-    #     Z_list = np.array(np.linspace(1*cm, 3*cm, 256))
-    #     particles = particle_field(NUMBER,xyrange=9*mm,z_list=Z_list,size_range=size_range)
-    #     particles = particles.sort_values(by=['z'],ascending=False)
-    #     particles.to_csv("param/%d.csv"% n,index=False)
-    #     holo = generate_holo_fromcsv2("param/%d.csv"% n)
-    #     plt.imsave("hologram/%d.jpg" % n, holo, cmap='gray')
-    #     t2 = time.time()
-    #     print('%5d / 2000 Time for hologram %f s with %d particle' % (n, (t2-t1), NUMBER))
-    #     break
-    #
-    #
+    size = pixel_pitch*N
+    # size = 10*mm # 10mm * 10mm
+
+    size_range = [40*um,41*um]
+
+    for n in range(0,1):
+        t1 = time.time()
+        # generate the random 3D location
+        NUMBER = np.random.randint(low=20, high=50, dtype=int)
+        Z_list = np.array(np.linspace(2*cm, 4*cm, 256))
+        particles = particle_field(NUMBER,xyrange=2.2*mm,z_list=Z_list,size_range=size_range)
+        # size = np.random.lognormal(0.04, 0.03, NUMBER)
+        # particles['size'] = size*mm
+        particles = particles.sort_values(by=['z'],ascending=False)
+        particles.to_csv("param256/%d.csv" % n,index=False)
+        holo = generate_holo_fromcsv2("param256/%d.csv"% n)
+        plt.imsave("hologram256/%d.jpg" % n, holo, cmap='gray')
+        t2 = time.time()
+        print('%5d / 2000 Time for hologram %f s with %d particle' % (n, (t2-t1), NUMBER))
+        break
+
+
 
 
 
