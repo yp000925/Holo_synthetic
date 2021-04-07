@@ -114,40 +114,52 @@ class CropdataUtil():
         img = np.array(img).astype(np.float32)
         return img/255.
 
-def random_crop_inputs_and_labels(crop_w, crop_h, stride, *maps):
+def random_crop_inputs_and_labels(crop_w, crop_h, stride, **maps):
     size = maps[0].shape
     h = size[0]
     w = size[1]
     grouped_maps = []
+
     for map in maps:
+        if len(map.shape) != 3:
+            map = np.expand_dims(map,axis=-1)
+
         cropped_maps = []
 
         for c_step in range(int((h-crop_h)//stride+1)):
             for r_step in range(int((w-crop_w)//stride+1)):
-                bbox = [int(stride*r_step), int(stride*(r_step+1)+crop_w-1), int(stride*c_step), int(stride*(c_step+1)+crop_h-1)] # bbox = [x0,x1,y0,y1]
-                print(bbox)
-                cropped_map = map[bbox[2]:bbox[3], bbox[0]:bbox[1]]
-                cropped_maps.append(cropped_map)
+                bbox = [int(stride*r_step), int(stride*r_step+crop_w-1), int(stride*c_step), int(stride*c_step+crop_h-1)] # bbox = [x0,x1,y0,y1]
+                if bbox[3] <= h and bbox[1] <= w:
+                    print(bbox)
+                    cropped_map = map[bbox[2]:bbox[3], bbox[0]:bbox[1],:]
+                    cropped_maps.append(cropped_map)
 
         cropped_maps = np.array(cropped_maps)
         grouped_maps.append(cropped_maps)
     return grouped_maps
 
-    
-
-
-
 if __name__ == "__main__":
-    # root_dir ='/Users/zhangyunping/PycharmProjects/Holo_synthetic/data_holo'
-    # file_path = 'check.csv'
-    # dataset = CropdataUtil(root_dir,file_path)
-    # for data in dataset:
-    #     break
+    root_dir ='/Users/zhangyunping/PycharmProjects/Holo_synthetic/data_holo'
+    file_path = 'check.csv'
+    dataset = CropdataUtil(root_dir,file_path)
+    for data in dataset:
+        img, size_projection, xycentre, xy_mask = data
+        croped = random_crop_inputs_and_labels(512, 512, 256, img, size_projection, xycentre, xy_mask)
+        for img_arrs in croped:
 
-    # test the crop functions
-    test = list(range(25))
-    test = np.array(test).reshape((5,5))
-    croped = random_crop_inputs_and_labels(2,2,1,test)
-    for i in range(croped[0].shape[0]):
-        print(croped[0][i])
+            for i in range(1):
+                img_arr = img_arrs[i, :, :, :]
+                if img_arr.shape[-1] == 1:
+                    img_arr = np.squeeze(img_arr, axis=-1)
+                img = Image.fromarray((img_arr / np.max(img_arr) * 255).astype(np.uint8))
+                img.show()
+        break
+
+    # # test the crop functions
+    # test = list(range(18))
+    # test = np.array(test).reshape((3,3,2))
+    # croped = random_crop_inputs_and_labels(1,1,1,test,test)
+    # for i in range(croped[0].shape[0]):
+    #     print(croped[0][i])
+
 
