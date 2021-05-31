@@ -60,5 +60,4 @@ def convert_coco_json(json_dir='../coco/annotations/', use_segments=False):
 
 if __name__ == '__main__':
     source = 'COCO'
-
-    convert_coco_json('/Users/zhangyunping/PycharmProjects/Holo_synthetic/clipped_data/holo')  # directory with *.json
+    convert_coco_json('/Users/zhangyunping/PycharmProjects/Holo_synthetic/clipped_data')  # directory with *.json

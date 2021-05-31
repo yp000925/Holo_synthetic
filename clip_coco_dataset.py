@@ -34,6 +34,9 @@ def get_new_bbox(old_bbox, boundary):
         if n_w <=0 or n_h<=0:
             return []
         else:
+            # axis center transfer
+            n_x1 = n_x1-b_x1
+            n_y1 = n_y1-b_y1
             return [n_x1,n_y1,n_w,n_h]
     else:
         return []
@@ -53,7 +56,7 @@ def get_new_annos(old_annos,boundary,img_id):
             'image_id': img_id,
             'iscrowd': 0,
         })
-        ANNO_CNT+=1
+        ANNO_CNT += 1
     return new_annos
 
 if __name__ == "__main__":
@@ -104,7 +107,7 @@ if __name__ == "__main__":
         # Read image
         image_info = coco.loadImgs(img_ids[i])[0]
         path = os.path.join(root_dir, image_info['file_name'])
-        img = np.array(Image.open(path))
+        # img = np.array(Image.open(path))
         # Read annotations
         annotation_ids = coco.getAnnIds(imgIds=img_ids[i], iscrowd=False)
         old_annos = coco.loadAnns(annotation_ids)
@@ -118,14 +121,15 @@ if __name__ == "__main__":
                 # boundary = [x0,x1,y0,y1]
                 if boundary[3] <= N and boundary[1] <= N:
                     # print(bbox)
-                    clipped_img = img[boundary[2]:boundary[3], boundary[0]:boundary[1], :]
+                    # clipped_img = img[boundary[2]:boundary[3], boundary[0]:boundary[1], :]
+                    d = 1
 
                 else:
                     continue
                 # save the cropped image
                 name = str(img_ids[i]) + '_' + str(idx) + '.png'
-                clipped_img = Image.fromarray((clipped_img / np.max(clipped_img) * 255).astype(np.uint8))
-                clipped_img.save('clipped_data/holo' + '/' + name)
+                # clipped_img = Image.fromarray((clipped_img / np.max(clipped_img) * 255).astype(np.uint8))
+                # clipped_img.save('clipped_data/holo' + '/' + name)
                 dataset['images'].append(
                     ({'id': IMG_ID, 'width': crop_w, 'height': crop_h, 'file_name': name, 'license': 'None'}))
                 # get the clipped bbox label
@@ -138,29 +142,29 @@ if __name__ == "__main__":
 
 
     import json
-    json_name = '/Users/zhangyunping/PycharmProjects/Holo_synthetic/clipped_data/holo/annotations_clip_512.json'
+    json_name = '/Users/zhangyunping/PycharmProjects/Holo_synthetic/annotations_clip_512_2nd.json'
     with open(json_name,'w') as f:
         json.dump(dataset,f)
-# #
-#     from PIL import Image,ImageDraw
 #
-#     # Draw RLE label
-#     coco = COCO(annotation_file="/Users/zhangyunping/PycharmProjects/Holo_synthetic/clipped_data/holo/annotations_clip.json")
-#     img_ids = coco.getImgIds()
-#     annotation_ids = coco.getAnnIds(imgIds = img_ids[0])
-#     annos = coco.loadAnns(annotation_ids)
-#     image_info = coco.loadImgs(img_ids[0])
-#     image_path = image_info[0]["file_name"]
-#     image_path = os.path.join("/Users/zhangyunping/PycharmProjects/Holo_synthetic/clipped_data/holo", image_path)
-#     print("image path (crowd label)", image_path)
-#     image = Image.open(image_path)
-#     draw = ImageDraw.Draw(image)
-#     for ann in annos:
-#         bbox = ann['bbox']
-#         x1 = int(bbox[0])
-#         y1 = int(bbox[1])
-#         x2 = int(bbox[0]+bbox[2])
-#         y2 = int(bbox[1]+bbox[3])
-#         label_name = str(ann['category_id'])
-#         draw.rectangle([x1, y1, x2, y2], outline='red')
-#         draw.text((x1, y1), label_name, (0, 255, 255))
+    from PIL import Image,ImageDraw
+
+    # Draw RLE label
+    coco = COCO(annotation_file="/clipped_data/annotations_clip_512_2nd.json")
+    img_ids = coco.getImgIds()
+    annotation_ids = coco.getAnnIds(imgIds = img_ids[5])
+    annos = coco.loadAnns(annotation_ids)
+    image_info = coco.loadImgs(img_ids[5])
+    image_path = image_info[0]["file_name"]
+    image_path = os.path.join("/Users/zhangyunping/PycharmProjects/Holo_synthetic/datayoloV5format/images/train", image_path)
+    print("image path (crowd label)", image_path)
+    image = Image.open(image_path)
+    draw = ImageDraw.Draw(image)
+    for ann in annos:
+        bbox = ann['bbox']
+        x1 = int(bbox[0])
+        y1 = int(bbox[1])
+        x2 = int(bbox[0]+bbox[2])
+        y2 = int(bbox[1]+bbox[3])
+        label_name = str(ann['category_id'])
+        draw.rectangle([x1, y1, x2, y2], outline='red')
+        draw.text((x1, y1), label_name, (0, 255, 255))
