@@ -25,9 +25,6 @@ class CropdataUtil():
         :param file_name: file_name
         :param transform:
         '''
-        # self.holo_dir = 'holo_dir'
-        # self.depthmap_dir = 'depthmap_dir'
-        # self.xycentre_dir = xycentre_dir
         self.root_dir = root_dir
         self.file_name = file_name
         self.transform = transform
@@ -51,7 +48,7 @@ class CropdataUtil():
     def get_xy_projection(self,param):
         """
         :param param: px,py,pz,psize stored in dataframe
-        :return: map: the xy_projection map, the pixel value is the corresponding depth, range from 0-1
+        :return: map: the xy_projection map, the pixel value is the corresponding depth, range from 0-255
                  mask: the indication map for overlapping 0: the overlap exists -> ignored when calculate the loss
         """
         arr = np.zeros((256,self.N,self.N))
@@ -161,7 +158,7 @@ if __name__ == "__main__":
                 if img_arr.shape[-1] == 1:
                     img_arr = np.squeeze(img_arr, axis=-1)
                 img = Image.fromarray((img_arr / np.max(img_arr) * 255).astype(np.uint8))
-                img.save(file_root+'/'+'%d_%d.jpg'%(idx,idx_2))
+                img.save(file_root+'/'+'%d_%d.png'%(idx,idx_2))
                 idx_2+=1
         idx+=1
         if idx%100 == 0:

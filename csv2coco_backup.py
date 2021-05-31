@@ -42,61 +42,54 @@ def get_bbox(x,y,z,size):
 def collect_anno(filename):
     id = re.findall(r'\d+', filename)
     id = int(id[0])
-    df = pd.read_csv('/Users/zhangyunping/PycharmProjects/Holo_synthetic/data_holo/param/'+filename)
+    df = pd.read_csv('/Users/zhangyunping/PycharmProjects/Holo_synthetic/param/'+filename)
     return (id,df)
 
 
 dataset={}
-dataset['info'] = []
-dataset['licenses'] = []
-dataset['info'].append({'year':"2021", "version": '0',
-        "description": "Hologram synthetic data",
-        "contributor": "zhangyp",
-        "url": "None",
-        "date_created": "2021-05-27"})
-dataset['licenses'].append({
-            "id": 1,
-            "url": "None",
-            "name": "zhangyp"
-        })
-
+# dataset['info'] = []
+# dataset['licenses'] = []
+# dataset['info'].append({'year':"2021", "version": '0',
+#         "description": "Hologram synthetic data",
+#         "contributor": "zhangyp",
+#         "url": "None",
+#         "date_created": "2021-02-24T08:05:45+00:00"})
+# dataset['liscense'].append({
+#             "id": 1,
+#             "url": "None",
+#             "name": "zhangyp"
+#         })
 dataset['categories']=[]
 dataset['images']=[]
 dataset['annotations']=[]
-
 # build the category based on the depth
-classes = list(range(1,257))
+classes = list(range(0,256))
 # classes = np.array(np.linspace(1*cm, 3*cm, 256))
 
-
-for cls in classes:
-    dataset['categories'].append({'id': int(cls), 'name': str(cls), 'supercategory':'Depth'})
-
-
-images = np.sort(os.listdir('/Users/zhangyunping/PycharmProjects/Holo_synthetic/data_holo/hologram'))
+for i, cls in enumerate(classes, 0):
+    dataset['categories'].append({'id': i, 'name': str(cls), 'supercategory':'Depth'})
 
 
-
+images = np.sort(os.listdir('data_holo/hologram'))
+images = images[0:10]
 for i, imagename in enumerate(images, 0):
     id = re.findall(r'\d+', imagename)
     dataset['images'].append(({'id':int(id[0]), 'width':1024, 'height':1024, 'file_name':imagename, 'license':'None'}))
     # if i == 10:
     #     break
 
-params = np.sort(os.listdir('/Users/zhangyunping/PycharmProjects/Holo_synthetic/data_holo/param'))
+params = np.sort(os.listdir('data_holo/param'))
+params = params[0:10]
 cnt_annot = 20000000
 for i,param in enumerate(params,0):
     (id,objs) = collect_anno(param)
     for index, obj in objs.iterrows():
         (bbox_x, bbox_y, width, height, seg) = get_bbox(obj['x'], obj['y'], obj['z'], obj['size'])
         depth = obj['z']
-        category_id = int((depth-1*cm)/res_z)+1
+        category_id = int((depth-1*cm)/res_z)
 
         if category_id == 256:
             category_id = 255
-
-        # if category_id == 0:
-        #     category_id = 1
 
         dataset['annotations'].append({
             'area': width*height,
@@ -110,7 +103,7 @@ for i,param in enumerate(params,0):
     # if i == 0:
     #     break
 
-json_name = 'annotations_27_may.json'
+json_name = 'annotations_try.json'
 with open(json_name,'w') as f:
     json.dump(dataset,f)
 

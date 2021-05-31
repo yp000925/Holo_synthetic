@@ -1,9 +1,8 @@
-from PIL import Image
-import numpy as np
-
+from __future__ import print_function, division
 import sys
 import os
 import torch
+import numpy as np
 import random
 import csv
 
@@ -13,7 +12,7 @@ from torch.utils.data.sampler import Sampler
 import pandas as pd
 from PIL import Image
 
-class CropdataUtil():
+class myDataloader(Dataset):
     """
     Dataset for 3D particle detection using capsule net
     """
@@ -42,6 +41,9 @@ class CropdataUtil():
         param = self.load_param(param_path)
         size_projection,xycentre,xy_mask = self.get_maps(param)
         return img,size_projection,xycentre,xy_mask
+
+    def __len__(self):
+        return len(self.file)
 
     def get_maps(self,param):
         size_projection, xy_mask = self.get_xy_projection(param)
@@ -112,68 +114,28 @@ class CropdataUtil():
             img = img.convert('RGB')
 
         img = np.array(img).astype(np.float32)
-        return img/255.
+        return img/255.0
 
-def random_crop_inputs_and_labels(crop_w, crop_h, stride, **maps):
-    grouped_maps = {}
-
-    for key in maps:
-        map = maps[key]
-        h = map.shape[0]
-        w = map.shape[1]
-
-        if key != 'img':
-            map = np.expand_dims(map, axis=-1)
-        # if len(map.shape) != 3:
-        #     map = np.expand_dims(map,axis=-1)
-        cropped_maps = []
-        for c_step in range(int((h-crop_h)//stride+1)):
-            for r_step in range(int((w-crop_w)//stride+1)):
-                bbox = [int(stride*r_step), int(stride*r_step+crop_w), int(stride*c_step), int(stride*c_step+crop_h)] # bbox = [x0,x1,y0,y1]
-                if bbox[3] <= h and bbox[1] <= w:
-                    # print(bbox)
-                    cropped_map = map[bbox[2]:bbox[3], bbox[0]:bbox[1],:]
-                    cropped_maps.append(cropped_map)
-
-        cropped_maps = np.array(cropped_maps)
-        grouped_maps[key] = cropped_maps
-
-    return grouped_maps
 
 if __name__ == "__main__":
-    import time
     root_dir ='/Users/zhangyunping/PycharmProjects/Holo_synthetic/data_holo'
-    file_path = 'data2.csv'
-    dataset = CropdataUtil(root_dir,file_path)
-    idx = 1000
-    for data in dataset:
+    file_path = 'check.csv'
+    dataset = myDataloader(root_dir,file_path)
+    # img = Image.open("/Users/zhangyunping/PycharmProjects/Holo_synthetic/data_holo/hologram/0.jpg")
+    # param = dataloader.load_param(root_dir + '/param/0.csv')
+    # img = dataloader.read_img(root_dir + '/hologram/0.jpg')
+    # size_projection, xycentre, xy_mask = dataloader.get_maps(param)
+    # size_p = Image.fromarray(size_projection*255.0)
+    # size_p.show()
+    # xyc = Image.fromarray(xycentre*255.0)
+    # xyc.show()
+    # xy_m = Image.fromarray(xy_mask*255.0)
+    # xy_m.show()
+    dataloader = torch.utils.data.DataLoader(dataset, batch_size=1, shuffle=False,
+                                             num_workers=1)
+    for data in dataloader:
         img, size_projection, xycentre, xy_mask = data
-        croped = random_crop_inputs_and_labels(512, 512, 256, img = img, size_projection=size_projection, xycentre=
-        xycentre, xy_mask=xy_mask)
-        for map in croped:
-            file_root = os.path.join(root_dir,map)
-            if not os.path.exists(file_root):
-                os.mkdir(file_root)
-            img_arrs = croped[map]
-            idx_2 = 0
-            for i in range(img_arrs.shape[0]):
-                img_arr = img_arrs[i, :, :, :]
-                if img_arr.shape[-1] == 1:
-                    img_arr = np.squeeze(img_arr, axis=-1)
-                img = Image.fromarray((img_arr / np.max(img_arr) * 255).astype(np.uint8))
-                img.save(file_root+'/'+'%d_%d.jpg'%(idx,idx_2))
-                idx_2+=1
-        idx+=1
-        if idx%100 == 0:
-            print(idx,'/',5000,time.ctime())
 
-
-    # test the crop functions
-    # c = {}
-    # img = list(range(25))
-    # img = np.array(img).reshape((5,5,1))
-    # label = np.array(list(range(25))).reshape((5,5))
-    # croped = random_crop_inputs_and_labels(4,4,1,img = img,label=label)
-
+        break
 
 
