@@ -2,9 +2,9 @@ import os
 import numpy as np
 import re
 
-img_s_dir = '/Users/zhangyunping/PycharmProjects/Holo_synthetic/datayoloV5format/images'
+img_s_dir = '/datayoloV5format_bu/images'
 
-label_s_dir = '/Users/zhangyunping/PycharmProjects/Holo_synthetic/datayoloV5format/labels/annotations_clip_512'
+label_s_dir = '/datayoloV5format_bu/labels/annotations_clip_512'
 
 data_list = os.listdir(img_s_dir)
 data_list.sort()
@@ -14,8 +14,8 @@ train_data = data_list[0:int(len(data_list)*0.7)]
 validation_data = data_list[int(len(data_list)*0.7):int(len(data_list)*0.7)+int(len(data_list)*0.2)]
 test_data = data_list[int(len(data_list)*0.7)+int(len(data_list)*0.2):]
 
-img_d_dir = '/Users/zhangyunping/PycharmProjects/Holo_synthetic/datayoloV5format/images/train'
-label_d_dir = '/Users/zhangyunping/PycharmProjects/Holo_synthetic/datayoloV5format/labels/train'
+img_d_dir = '/datayoloV5format_bu/images/train'
+label_d_dir = '/datayoloV5format_bu/labels/train'
 
 for dir in [img_d_dir,label_d_dir]:
     if not os.path.exists(dir):
@@ -35,8 +35,8 @@ for img_name in train_data:
         print(img_name)
         continue
 
-img_d_dir = '/Users/zhangyunping/PycharmProjects/Holo_synthetic/datayoloV5format/images/validation'
-label_d_dir = '/Users/zhangyunping/PycharmProjects/Holo_synthetic/datayoloV5format/labels/validation'
+img_d_dir = '/datayoloV5format_bu/images/validation'
+label_d_dir = '/datayoloV5format_bu/labels/validation'
 for dir in [img_d_dir,label_d_dir]:
     if not os.path.exists(dir):
         os.mkdir(dir)
@@ -57,8 +57,8 @@ for img_name in validation_data:
 
 
 
-img_d_dir = '/Users/zhangyunping/PycharmProjects/Holo_synthetic/datayoloV5format/images/test'
-label_d_dir = '/Users/zhangyunping/PycharmProjects/Holo_synthetic/datayoloV5format/labels/test'
+img_d_dir = '/datayoloV5format_bu/images/test'
+label_d_dir = '/datayoloV5format_bu/labels/test'
 for dir in [img_d_dir,label_d_dir]:
     if not os.path.exists(dir):
         os.mkdir(dir)

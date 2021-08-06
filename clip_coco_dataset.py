@@ -51,7 +51,7 @@ def get_new_annos(old_annos,boundary,img_id):
         new_annos.append({
             'area': new_bbox[2]*new_bbox[3],
             'bbox': new_bbox,
-            'category_id': anno['category_id']+1,
+            'category_id': anno['category_id'],
             'id': ANNO_CNT,
             'image_id': img_id,
             'iscrowd': 0,
@@ -68,13 +68,13 @@ if __name__ == "__main__":
     dataset['licenses'] = []
     dataset['holoinfo'] = []
     dataset['info'].append({'year': "2021", "version": '0',
-                            "description": "Hologram synthetic data clipped version",
+                            "description": "Hologram synthetic data 100 particle with fixed size",
                             "contributor": "zhangyp",
                             "url": "None",
-                            "date_created": "2021-05-29",
+                            "date_created": "2021-08-05",
                             })
     dataset['licenses'].append({
-        "id": 1,
+        "id": 2,
         "url": "None",
         "name": "zhangyp"
     })
@@ -91,14 +91,15 @@ if __name__ == "__main__":
     N = 1024
     # pixel_pitch = 10*um
     size = 10 * mm  # 10mm * 10mm
-    size_range = [20 * um, 100 * um]
+    # size_range = [20 * um, 100 * um]
     res = size / N
-    anno_path = '_annotations_holoall.json'
+    anno_path = 'annotations_fortest_100.json'
     coco = COCO(annotation_file=anno_path)
     categories = coco.loadCats(coco.getCatIds())
     img_ids = coco.getImgIds()
     print("total image number in the dataset is {:d}".format(len(img_ids)))
-    root_dir = '/Users/zhangyunping/PycharmProjects/3Ddetection/data/hologram'
+    root_dir = '/Users/zhangyunping/PycharmProjects/Holo_synthetic/test_data/hologram'
+    # root_dir = '/Users/zhangyunping/PycharmProjects/3Ddetection/data/hologram'
     IMG_ID = 0 # each image is linked to an unique id
     crop_w, crop_h = 512, 512
     stride = 256
@@ -107,7 +108,7 @@ if __name__ == "__main__":
         # Read image
         image_info = coco.loadImgs(img_ids[i])[0]
         path = os.path.join(root_dir, image_info['file_name'])
-        # img = np.array(Image.open(path))
+        img = np.array(Image.open(path))
         # Read annotations
         annotation_ids = coco.getAnnIds(imgIds=img_ids[i], iscrowd=False)
         old_annos = coco.loadAnns(annotation_ids)
@@ -121,15 +122,15 @@ if __name__ == "__main__":
                 # boundary = [x0,x1,y0,y1]
                 if boundary[3] <= N and boundary[1] <= N:
                     # print(bbox)
-                    # clipped_img = img[boundary[2]:boundary[3], boundary[0]:boundary[1], :]
+                    clipped_img = img[boundary[2]:boundary[3], boundary[0]:boundary[1], :]
                     d = 1
 
                 else:
                     continue
                 # save the cropped image
                 name = str(img_ids[i]) + '_' + str(idx) + '.png'
-                # clipped_img = Image.fromarray((clipped_img / np.max(clipped_img) * 255).astype(np.uint8))
-                # clipped_img.save('clipped_data/holo' + '/' + name)
+                clipped_img = Image.fromarray((clipped_img / np.max(clipped_img) * 255).astype(np.uint8))
+                clipped_img.save('test_data/cropped_data/img' + '/' + name)
                 dataset['images'].append(
                     ({'id': IMG_ID, 'width': crop_w, 'height': crop_h, 'file_name': name, 'license': 'None'}))
                 # get the clipped bbox label
@@ -140,31 +141,36 @@ if __name__ == "__main__":
         if i % 500 == 0:
             print(i, IMG_ID, time.ctime())
 
-
+#
     import json
-    json_name = '/Users/zhangyunping/PycharmProjects/Holo_synthetic/annotations_clip_512_2nd.json'
+    json_name = '/Users/zhangyunping/PycharmProjects/Holo_synthetic/annotations_clip_512_fortest02.json'
     with open(json_name,'w') as f:
         json.dump(dataset,f)
 #
     from PIL import Image,ImageDraw
 
-    # Draw RLE label
-    coco = COCO(annotation_file="/clipped_data/annotations_clip_512_2nd.json")
-    img_ids = coco.getImgIds()
-    annotation_ids = coco.getAnnIds(imgIds = img_ids[5])
-    annos = coco.loadAnns(annotation_ids)
-    image_info = coco.loadImgs(img_ids[5])
-    image_path = image_info[0]["file_name"]
-    image_path = os.path.join("/Users/zhangyunping/PycharmProjects/Holo_synthetic/datayoloV5format/images/train", image_path)
-    print("image path (crowd label)", image_path)
-    image = Image.open(image_path)
-    draw = ImageDraw.Draw(image)
-    for ann in annos:
-        bbox = ann['bbox']
-        x1 = int(bbox[0])
-        y1 = int(bbox[1])
-        x2 = int(bbox[0]+bbox[2])
-        y2 = int(bbox[1]+bbox[3])
-        label_name = str(ann['category_id'])
-        draw.rectangle([x1, y1, x2, y2], outline='red')
-        draw.text((x1, y1), label_name, (0, 255, 255))
+    # # Draw RLE label
+    # coco = COCO(annotation_file="/Users/zhangyunping/PycharmProjects/Holo_synthetic/test/test.json")
+    # # coco = COCO(annotation_file='/Users/zhangyunping/PycharmProjects/Holo_synthetic/comparison/annotations_clip_512_fortest.json')
+    # img_ids = coco.getImgIds()
+    # for i in range(12,15):
+    #     annotation_ids = coco.getAnnIds(imgIds=img_ids[i])
+    #     annos = coco.loadAnns(annotation_ids)
+    #     image_info = coco.loadImgs(img_ids[i])
+    #     image_path = image_info[0]["file_name"]
+    #     image_path = os.path.join("/Users/zhangyunping/PycharmProjects/Holo_synthetic/test/img_cropped", image_path)
+    #     # image_path = os.path.join("/Users/zhangyunping/PycharmProjects/Holo_synthetic/comparison/images/test_01", image_path)
+    #
+    #     print("image path (crowd label)", image_path)
+    #     image = Image.open(image_path)
+    #     draw = ImageDraw.Draw(image)
+    #     for ann in annos:
+    #         bbox = ann['bbox']
+    #         x1 = int(bbox[0])
+    #         y1 = int(bbox[1])
+    #         x2 = int(bbox[0]+bbox[2])
+    #         y2 = int(bbox[1]+bbox[3])
+    #         label_name = str(ann['category_id'])
+    #         draw.rectangle([x1, y1, x2, y2], outline='red')
+    #         draw.text((x1, y1), label_name, (0, 255, 255))
+    #     image.show()

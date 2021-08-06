@@ -1,5 +1,6 @@
 from LightPipes import *
 import matplotlib.pyplot as plt
+
 def Particle(Fin, x_shift=0.0, y_shift=0.0):
     """
     *Inserts a circular screen in the field.*

@@ -75,18 +75,22 @@ if __name__ == '__main__':
     N = 1024
     # pixel_pitch = 10*um
     size = 10*mm # 10mm * 10mm
-    size_range = [50*um,50*um] # radii
-    t1 = time.time()
-    # generate the random 3D location
-    # NUMBER = np.random.randint(low=20, high=50, dtype=int)
-    NUMBER = 10
-    # Z_list = np.array(np.linspace(1*cm, 3*cm, 256))
-    Z_list = np.array([100*mm, 120*mm, 140*mm])
-    particles = particle_field(NUMBER,xyrange=8.5*mm,z_list=Z_list,size_range=size_range)
-    particles = particles.sort_values(by=['z'],ascending=False)
-    particles.to_csv("/Users/zhangyunping/PycharmProjects/Holo_preprocess/test_particles2.csv",index=False)
-    holo = generate_holo_fromcsv2("/Users/zhangyunping/PycharmProjects/Holo_preprocess/test_particles2.csv")
-    plt.imsave("/Users/zhangyunping/PycharmProjects/Holo_preprocess/test_particles2.png", holo, cmap='gray')
+    size_range = [50*um,50*um]
+
+    for n in range(0,100):
+        t1 = time.time()
+        # generate the random 3D location
+        NUMBER = np.random.randint(low=100, high=101, dtype=int)
+        Z_list = np.array(np.linspace(1*cm, 3*cm, 256))
+        particles = particle_field(NUMBER,xyrange=9*mm,z_list=Z_list,size_range=size_range)
+        particles = particles.sort_values(by=['z'],ascending=False)
+        particles.to_csv("test_data/param/%d.csv"% n,index=False)
+        holo = generate_holo_fromcsv2("test_data/param/%d.csv"% n)
+        plt.imsave("test_data/hologram/%d.jpg" % n, holo, cmap='gray')
+        t2 = time.time()
+        print('%5d / 2000 Time for hologram %f s with %d particle' % (n, (t2-t1), NUMBER))
+
+
 
 
 
