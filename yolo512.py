@@ -1,3 +1,6 @@
+# this is the script for generate the coco dataset of 512x512 image size
+
+
 from utils import *
 from propagators import ASM
 import numpy as np
@@ -20,11 +23,11 @@ def get_size(smin,smax,number):
     s = (smax-smin)*np.random.random(number)+smin
     return s
 def get_buffer(z,size):
-    z_rate = (z-1*cm)/(3*cm-1*cm)
+    z_rate = (z-depth_range[0])/(depth_range[1] - depth_range[0])
     # size_rate = (size-size_range[0])/(size_range[1]-size_range[0])
     size_rate = 1
-    buffer = 30+30*z_rate+15*size_rate
-    buffer = 30
+    buffer = 20+10*z_rate+5*size_rate
+    # buffer = 30
     # p_size = int(size_range[1]/frame * N)
     # buffer = p_size*10*(z_rate*0.6+size_rate*0.4)
     return buffer
@@ -119,13 +122,14 @@ def generate_holo_fromcsv2(file):
 if __name__ == '__main__':
     wavelength = 633*nm
     N = 512
-    # pixel_pitch = 10*um
-    frame = 10*mm # 10mm * 10mm
+    pixel_pitch = 10*um
+    frame = pixel_pitch*N
     size_range = [50*um,50*um]
     depth_range= (1*cm, 3*cm)
-    particle_number = (30,31)
+    particle_number = (50,51)
     hologram_number = 3
-    res_z = (3 * cm - 1 * cm) / 256
+    dep_slice = 256
+    res_z = (depth_range[1] - depth_range[0]) / dep_slice
 
     dataset = {}
     dataset['info'] = []
@@ -153,105 +157,72 @@ if __name__ == '__main__':
         dataset['categories'].append({'id': int(cls), 'name': str(cls), 'supercategory': 'Depth'})
 
     # images = np.sort(os.listdir('/Users/zhangyunping/PycharmProjects/Holo_synthetic/test_data/hologram'))
-    crop_w, crop_h = 512, 512
-    stride = 256
+    # crop_w, crop_h = 512, 512
+    # stride = 256
     IMG_ID = 0
     ANNO_CNT = 0
 
-    for n in tqdm(range(0, hologram_number)):
+    for n in tqdm(range(0,hologram_number)):
         t1 = time.time()
         # generate the random 3D location
         NUMBER = np.random.randint(low=particle_number[0], high=particle_number[1], dtype=int)
-        Z_list = np.array(np.linspace(depth_range[0], depth_range[1], 256))
-        particles = particle_field(NUMBER,xyrange=9*mm,z_list=Z_list,size_range=size_range)
+        Z_list = np.array(np.linspace(depth_range[0], depth_range[1], dep_slice))
+        particles = particle_field(NUMBER,xyrange=0.0048,z_list=Z_list,size_range=size_range)
         particles = particles.sort_values(by=['z'],ascending=False)
         particles.to_csv("test/param/%d.csv"% n, index=False)
         holo = generate_holo_fromcsv2("test/param/%d.csv"% n)
-        plt.imsave("test/img_orignal/%d.jpg" % n, holo, cmap='gray')
+        for (p_x, p_y, p_z, p_s) in particles.values:
+            bbox = get_bbox(p_x, p_y, p_z, p_s)[0:4]
+            if len(bbox) != 4:
+                continue
+            category_id = int((p_z - depth_range[0]) / res_z) + 1
+            if category_id == 256:
+                category_id = 255
+            dataset['annotations'].append({
+                'area': bbox[2] * bbox[3],
+                'bbox': bbox,
+                'category_id': category_id,
+                'id': ANNO_CNT,
+                'image_id': IMG_ID,
+                'iscrowd': 0,
+            })
+            ANNO_CNT += 1
 
-        # split into subimages
-        idx = 0
-        for c_step in range(int((N - crop_h) // stride + 1)):
-            for r_step in range(int((N - crop_w) // stride + 1)):
-                boundary = [int(stride * r_step), int(stride * r_step + crop_w), int(stride * c_step),
-                        int(stride * c_step + crop_h)]
-                # boundary = [x0,x1,y0,y1]
-                if boundary[3] <= N and boundary[1] <= N:
-                    # print(bbox)
-                    clipped_img = holo[boundary[2]:boundary[3], boundary[0]:boundary[1]]
-                else:
-                    continue
+        name = str(IMG_ID) + '.png'
 
-                # get the clipped bbox label
-                check_cnt = ANNO_CNT
-                no_particle = False
-                for (p_x,p_y,p_z,p_s) in particles.values:
-                    old_bbox = get_bbox(p_x,p_y,p_z,p_s)[0:4]
-                    new_bbox = get_new_bbox(old_bbox, boundary)
-
-                    if len(new_bbox) != 4:
-                        continue
-
-                    category_id = int((p_z - 1 * cm) / res_z) + 1
-                    if category_id == 256:
-                        category_id = 255
-                    dataset['annotations'].append({
-                        'area': new_bbox[2] * new_bbox[3],
-                        'bbox': new_bbox,
-                        'category_id': category_id,
-                        'id': ANNO_CNT,
-                        'image_id': IMG_ID,
-                        'iscrowd': 0,
-                    })
-                    ANNO_CNT += 1
-
-
-                if ANNO_CNT == check_cnt:
-                    #if subimage has no particle in it, do not save the image
-                    no_particle = True
-
-                # save the cropped image
-                if not no_particle:
-                    name = str(n) + '_' + str(idx) + '.png'
-                    clipped_img = Image.fromarray((clipped_img / np.max(clipped_img) * 255).astype(np.uint8)).convert(
-                        'RGB')
-                    clipped_img.save('test/img_cropped' + '/' + name)
-                    dataset['images'].append(
-                        ({'id': IMG_ID, 'width': crop_w, 'height': crop_h, 'file_name': name, 'license': 'None'}))
-                    IMG_ID += 1
-                    idx += 1
-
-
+        img = Image.fromarray((holo / np.max(holo) * 255).astype(np.uint8)).convert(
+            'RGB')
+        img.save('test/img_orignal' + '/' + name)
+        dataset['images'].append(
+            ({'id': IMG_ID, 'width': N, 'height': N, 'file_name': name, 'license': 'None'}))
+        IMG_ID += 1
 
     import json
-    json_name = '/Users/zhangyunping/PycharmProjects/Holo_synthetic/test/test.json'
+    json_name = '/Users/zhangyunping/PycharmProjects/Holo_synthetic/shao512check.json'
     with open(json_name,'w') as f:
         json.dump(dataset,f)
 
+    # coco = COCO(annotation_file="/Users/zhangyunping/PycharmProjects/Holo_synthetic/shao512check.json")
+    # # coco = COCO(annotation_file='/Users/zhangyunping/PycharmProjects/Holo_synthetic/comparison/annotations_clip_512_fortest.json')
+    # img_ids = coco.getImgIds()
+    # for i in range(2):
+    #     annotation_ids = coco.getAnnIds(imgIds=img_ids[i])
+    #     annos = coco.loadAnns(annotation_ids)
+    #     image_info = coco.loadImgs(img_ids[i])
+    #     image_path = image_info[0]["file_name"]
+    #     image_path = os.path.join("/Users/zhangyunping/PycharmProjects/Holo_synthetic/test/img_orignal", image_path)
+    #     # image_path = os.path.join("/Users/zhangyunping/PycharmProjects/Holo_synthetic/comparison/images/test_01", image_path)
     #
-    #
-    coco = COCO(annotation_file="/Users/zhangyunping/PycharmProjects/Holo_synthetic/test/test.json")
-    # coco = COCO(annotation_file='/Users/zhangyunping/PycharmProjects/Holo_synthetic/comparison/annotations_clip_512_fortest.json')
-    img_ids = coco.getImgIds()
-    for i in range(1):
-        annotation_ids = coco.getAnnIds(imgIds=img_ids[i])
-        annos = coco.loadAnns(annotation_ids)
-        image_info = coco.loadImgs(img_ids[i])
-        image_path = image_info[0]["file_name"]
-        image_path = os.path.join("/Users/zhangyunping/PycharmProjects/Holo_synthetic/test/img_cropped", image_path)
-        # image_path = os.path.join("/Users/zhangyunping/PycharmProjects/Holo_synthetic/comparison/images/test_01", image_path)
-
-        print("image path (crowd label)", image_path)
-        image = Image.open(image_path)
-        draw = ImageDraw.Draw(image)
-        for ann in annos:
-            bbox = ann['bbox']
-            x1 = int(bbox[0])
-            y1 = int(bbox[1])
-            x2 = int(bbox[0]+bbox[2])
-            y2 = int(bbox[1]+bbox[3])
-            # label_name = str(ann['category_id'])
-            label_name = str(int(ann['category_id'] / 255.0 * 1000) / 1000)
-            draw.rectangle([x1, y1, x2, y2], outline='green',width=2)
-            draw.text((x1, y1), label_name, fill='yellow')
-        image.show()
+    #     print("image path (crowd label)", image_path)
+    #     image = Image.open(image_path)
+    #     draw = ImageDraw.Draw(image)
+    #     for ann in annos:
+    #         bbox = ann['bbox']
+    #         x1 = int(bbox[0])
+    #         y1 = int(bbox[1])
+    #         x2 = int(bbox[0]+bbox[2])
+    #         y2 = int(bbox[1]+bbox[3])
+    #         label_name = str(ann['category_id'])
+    #         draw.rectangle([x1, y1, x2, y2], outline='red')
+    #         draw.text((x1, y1), label_name, (0, 255, 255))
+    #     image.show()
