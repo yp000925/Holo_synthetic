@@ -4,7 +4,8 @@ from utils import *
 from propagators import ASM
 import numpy as np
 from PIL import Image
-
+import matplotlib
+matplotlib.use('TkAgg')
 
 um = 1e-6
 mm = 1e-3
@@ -19,21 +20,20 @@ frame_size = pixel_pitch * N
 dep_slice = 256
 dep_res = (depth_range[1]-depth_range[0])/dep_slice
 
-file = 'stacked_info2.csv'
+file = 'tracks_3D_particle.csv'
 
 # file = 'test.csv'
 f = pd.read_csv(file)
 
 
-
-
-
 import trackpy as tp
+
 
 
 f['x'] = f['x']*pixel_pitch
 f['y'] = f['y']*pixel_pitch
-f['z'] = (f['z']+dep_slice/2)*dep_res+depth_range[0]
+f['z'] = (f['z']+64)*dep_res*2+depth_range[0]
+
 
 
 wavelength = 633 * nm
@@ -67,13 +67,26 @@ def generate_holo_fromfield(particles_field):
     # plt.imsave("Hologram%d.png" % n, I, cmap='gray')
     return I
 
-for frame_idx in range(len(f)):
+# fig = plt.figure(figsize=(3, 3), dpi=250)
+# fig = plt.figure()
+# ax = fig.add_subplot(111, projection='3d')
+# ax.grid(False)
+# particle_idx = f['particle_idx']
+# for idx in particle_idx:
+#     tracks = f[f['particle_idx'] == idx]
+#     # ax.plot3D(tracks['x'], tracks['y'], tracks['z'],
+#     #           c='b', lw=0.25)
+#
+#
+
+frames = f['frame']
+from tqdm import tqdm
+for frame_idx in tqdm(frames):
     particles = f[f.frame==frame_idx]
     holo = generate_holo_fromfield(particles)
     img = Image.fromarray((holo / np.max(holo) * 255).astype(np.uint8)).convert('RGB')
     img.show()
+    name = 'frame%d'%frame_idx+'.png'
+    img.save('3dtrack/'+name)
     if frame_idx == 5:
         break
-
-
-tp.plot_traj3d

@@ -1,22 +1,30 @@
+'''
+generate the random wolk for the 3D field without overlapping
+'''
 
 from utils import *
 from propagators import ASM
 import numpy as np
 import pandas as pd
 import time
-from PIL import Image,ImageDraw
+from PIL import Image, ImageDraw
 from pycocotools.coco import COCO
 import os
 from tqdm import tqdm
-
+import numpy as np
 from itertools import cycle
+import matplotlib
+import matplotlib.pyplot as plt
+matplotlib.use('TkAgg')
+import trackpy as tp
+import pandas as pd
+import numpy as np
+from mpl_toolkits.mplot3d import Axes3D
 
-#%%
-# Define parameters for the walk
 dims = 3
-n_runs = 5 # the number of particles
-step_n = 200 # the number of step
-step_set = [10,10,5] #for x y z direction
+
+step_n = 30 # the number of step
+step_set = [10, 10, 20] #for x y z direction
 
 def get_origin(xyrange=None, zrange=None, dims =3):
     if xyrange is None:
@@ -26,8 +34,8 @@ def get_origin(xyrange=None, zrange=None, dims =3):
 
     if dims == 3:
         xy_origin = np.random.randint(low=xyrange[0], high=xyrange[1], size=(2))
-        z_origin = np.random.randint(low=zrange[0],high=zrange[1],size=(1))
-        origin = np.concatenate((xy_origin,z_origin))
+        z_origin = np.random.randint(low=zrange[0],high=zrange[1], size=(1))
+        origin = np.concatenate((xy_origin, z_origin))
     else:
         origin=np.random.randint(low=xyrange[0], high=xyrange[1], size=(2))
     return origin
@@ -66,7 +74,7 @@ def generate_one_track(step,xyrange=None, zrange=None, dims =3):
             hity=False
         else:
             if step_prob[1]<=0.3:
-                next_pos = np.array([next_pos[0],current_pos[1]-step_set[1],current_pos[2]])
+                next_pos = np.array([next_pos[0], current_pos[1]-step_set[1], current_pos[2]])
             elif 0.3<step_prob[1]<0.6:
                 next_pos = np.array([next_pos[0], current_pos[1], current_pos[2]])
             else:
@@ -102,104 +110,55 @@ def generate_one_track(step,xyrange=None, zrange=None, dims =3):
     return np.array(path)
 
 
+# ini_tracks = pd.DataFrame(columns = ['x','y','z','frame','particle_idx'])
+# for n in tqdm(range(0,n_runs)):
+#     path = generate_one_track(step_n,xyrange=[-40,40])
+#     buffer = pd.DataFrame(columns= ['x','y','z','frame','particle_idx'])
+#     buffer['x'] = path[:,0]
+#     buffer['y'] = path[:,1]
+#     buffer['z'] = path[:,2]
+#     buffer['frame'] = np.array(range(len(path)))
+#     buffer['particle_idx'] = [n]*len(path)
+#     ini_tracks = pd.concat([ini_tracks,buffer],axis=0)
+
+
+box_w = 70
+box_h = 70
+stride = 70
+N_x = 512
+N_y = 512
+particle_idx = 0
 tracks = pd.DataFrame(columns = ['x','y','z','frame','particle_idx'])
-for n in tqdm(range(0,n_runs)):
-    path = generate_one_track(step_n,xyrange=[-20,20])
-    buffer = pd.DataFrame(columns= ['x','y','z','frame','particle_idx'])
-    buffer['x'] = path[:,0]
-    buffer['y'] = path[:,1]
-    buffer['z'] = path[:,2]
-    buffer['frame'] = np.array(range(len(path)))
-    buffer['particle_idx'] = [n]*len(path)
-    tracks = pd.concat([tracks,buffer],axis=0)
-    break
+for c_step in tqdm(range((N_x-box_w)//stride+1)):
+    for r_step in range((N_y-box_h)//stride+1):
+        flag = np.random.rand(1) < 0.7
+        if flag:
+            continue
+        buffer = pd.DataFrame(columns= ['x','y','z','frame','particle_idx'])
+        path = generate_one_track(step_n, xyrange=[-50, 50])
+        c_x = -512/2 + box_w/2 + c_step*stride
+        c_y = -512/2 + box_h/2 + r_step*stride
+        # idx = np.random.choice(ini_tracks.particle_idx.unique(),1)
+        # particle_info = ini_tracks[ini_tracks["particle_idx"]==idx[0]]
+        buffer['x'] = path[:,0] + c_x
+        buffer['y'] = path[:,1] + c_y
+        buffer['z'] = path[:,2]
+        buffer['particle_idx']  = [particle_idx]*len(path)
+        buffer['frame'] = np.array(range(len(path)))
+        tracks = pd.concat([tracks,buffer],axis=0)
+        particle_idx += 1
 
-# tracks.to_csv('tracks_3D_particle.csv',index=False)
-
-# colors = cycle('bgrcmykbgrcmykbgrcmykbgrcmyk')
-#
-# runs = np.arange(n_runs)
-# step_shape = (step_n, dims)
-# Plot
-# fig = plt.figure(figsize=(3, 3), dpi=250)
+# tracks.to_csv("3d_tracks_no_overlap.csv",index = False)
+# gt = tracks
 # fig = plt.figure()
-# ax = fig.add_subplot(111, projection='3d')
-# ax.grid(False)
-# ax.xaxis.pane.fill = ax.yaxis.pane.fill = ax.zaxis.pane.fill = False
-# ax.set_xlabel("X")
-# ax.set_ylabel('Y')
-# ax.set_zlabel('Z')
-# ax.set_xlim(-256, 256)
-# ax.set_ylim(-256, 256)
-# ax.set_zlim(-64, 64)
+# ax = fig.add_subplot(111,projection = '3d')
+# particle_idx = gt['particle_idx'].unique()
 
-# path = generate_one_track(10)
-# ax.scatter3D(path[:, 0], path[:, 1], path[:, 2],
-#              c='b', alpha=0.15, s=1)
-# ax.plot3D(path[:, 0], path[:, 1], path[:, 2],
-#           c='b', lw=1)
-
-# for i, col in zip(runs, colors):
-#     # Simulate steps in 3D
-#     origin = get_origin()
-#     path = generate_one_track(step_n)
-#
-#     # Plot the path
-#     ax.scatter3D(path[:, 0], path[:, 1], path[:, 2],
-#                  c=col, alpha=0.15, s=1)
-#     ax.plot3D(path[:, 0], path[:, 1], path[:, 2],
-#               c=col, alpha=0.25, lw=0.25)
-#     ax.plot3D(start[:, 0], start[:, 1], start[:, 2],
-#               c=col, marker="+")
-#     ax.plot3D(stop[:, 0], stop[:, 1], stop[:, 2],
-#               c=col, marker="o")
-#
-# plt.title('3D Random Walk - Multiple runs')
+# from itertools import cycle
+# colors = cycle('bgrcmykbgrcmykbgrcmykbgrcmyk')
+# for i,(idx,col) in enumerate(zip(particle_idx,colors)):
+#      path = gt[gt['particle_idx'] == idx]
+#      ax.plot3D(path['x'],path['y'],path['z'],c=col)
+#      if i == 10:
+#           break
 # plt.show()
-
-
-#%% check the linked algorithm works or not
-import matplotlib
-matplotlib.use('TkAgg')
-import trackpy as tp
-import pandas as pd
-f = pd.read_csv("tracks_3D_particle.csv")
-
-# linked = tp.link_df(f, 70, pos_columns=['x', 'y', 'z'])
-# tp.plot_traj3d(linked)
-
-fig = plt.figure()
-ax = fig.add_subplot(111,projection = '3d')
-particle_idx = f['particle_idx']
-from itertools import cycle
-colors = cycle('bgrcmykbgrcmykbgrcmykbgrcmyk')
-for (idx,col) in zip(particle_idx,colors):
-     path = f[f['particle_idx'] == idx]
-     ax.plot3D(path['x'],path['y'],path['z'],c=col)
-
-plt.show()
-
-#%% generate helix curve
-
-fig = plt.figure()
-ax = fig.gca(projection='3d')
-theta = np.linspace(-2 * np.pi, 2 * np.pi, 256)
-# z = np.linspace(0, 2, 256)
-z = list(range(256))
-r = 240
-x = r * np.sin(theta)
-y = r * np.cos(theta)
-ax.plot(x,y, z, label='parametric curve')
-ax.legend()
-
-plt.show()
-track = pd.DataFrame(columns = ['x','y','z','frame','particle_idx'])
-frame = list(range(256))
-particle_idx = [0]*len(frame)
-track['x'] = x
-track['y'] = y
-track['z'] = z
-track['frame'] = frame
-track['particle_idx'] = particle_idx
-track.to_csv('helix_3D.csv',index=False)
-
